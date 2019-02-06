@@ -1,55 +1,68 @@
 const fs = require('fs')
 const path = require('path')
-const URL = require('url')
+const util = require('util')
+const glob = require('glob')
 const puppeteer = require('puppeteer')
 
 const IMAGE_FORMAT = 'png'
+const SNAPSHOT_EXTENSION = 'html'
 
-function ensureScreenshotsPath(screenshotsPath) {
-  if (!fs.existsSync(path.resolve(screenshotsPath))) {
-    fs.mkdirSync(path.resolve(screenshotsPath))
+const readFile = util.promisify(fs.readFile)
+const makeDir = util.promisify(fs.mkdir)
+const globDir = util.promisify(glob)
+
+function resolveSnapshotPath(dir, snapshotName) {
+  return path.resolve(dir, snapshotName)
+}
+
+async function ensureScreenshotsDir(dir) {
+  try {
+    await makeDir(path.resolve(dir))
+  } catch (error) {
+    if (error.code === 'EEXIST') {
+      return
+    }
+
+    throw error
   }
 }
 
-async function getScreenshotsPaths(browser, host) {
-  const page = await browser.newPage()
-
-  await page.goto(host, { waitUntil: 'load' })
-  const hrefs = await page.$$eval('a', (hrefs) => hrefs.map((a) => a.href))
-  await page.close()
-
-  return hrefs
+async function fetchSnapshot(snapshotPath) {
+  return await readFile(snapshotPath, { encoding: 'utf8' })
 }
 
-async function takeScreenshot(browser, url, screenshotsPath) {
-  const page = await browser.newPage()
+async function getSnapshots(dir) {
+  return await globDir(`*.${SNAPSHOT_EXTENSION}`, { cwd: path.resolve(dir) })
+}
 
-  await page.goto(url)
+async function takeScreenshot(page, html, screenshotPath) {
+  console.log(`Generating screenshot ${screenshotPath}`)
+
+  await page.setContent(html, { waitUntil: 'load' })
   await page.screenshot({
-    path: path.resolve(
-      path.join(screenshotsPath, `${URL.parse(url).pathname}.${IMAGE_FORMAT}`)
-    ),
+    path: `${screenshotPath}.${IMAGE_FORMAT}`,
+    type: IMAGE_FORMAT,
     fullPage: true,
   })
-  await page.close()
 }
 
-async function command({ host, headless, screenshotsPath }) {
-  ensureScreenshotsPath(screenshotsPath)
+async function command({ dir, outputDir, headless, max }) {
+  await ensureScreenshotsDir(outputDir)
 
-  console.log(`Screenshots dir: ${screenshotsPath}`)
-  console.log()
+  const snapshots = await getSnapshots(dir)
 
   console.log('Launching puppeteer...')
-  const browser = await puppeteer.launch({
-    headless,
-  })
-  const snapshotsPaths = await getScreenshotsPaths(browser, host)
+  const browser = await puppeteer.launch({ headless })
+  const page = await browser.newPage()
 
-  for (let fixturePath of snapshotsPaths) {
-    console.log(`Saving ${fixturePath}`)
+  for (let snapshotName of snapshots.slice(0, max)) {
+    const html = await fetchSnapshot(resolveSnapshotPath(dir, snapshotName))
 
-    await takeScreenshot(browser, fixturePath, screenshotsPath)
+    await takeScreenshot(
+      page,
+      html,
+      resolveSnapshotPath(outputDir, snapshotName)
+    )
   }
 
   await browser.close()

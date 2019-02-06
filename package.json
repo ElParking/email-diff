@@ -1,14 +1,20 @@
 {
   "name": "email-diff",
+  "description": "Email diff tool",
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
   "bin": "bin/email-diff.js",
+  "files": [
+    "bin/*",
+    "commands/*"
+  ],
   "scripts": {
     "capture": "node src/capture.js",
     "test": "node src/test.js"
   },
   "dependencies": {
+    "glob": "^7.1.3",
     "pixel-diff": "^1.0.1",
     "puppeteer": "^1.12.1",
     "yargs": "^12.0.5"

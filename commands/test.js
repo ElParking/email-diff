@@ -1,17 +1,35 @@
 const fs = require('fs')
 const path = require('path')
+const util = require('util')
+const glob = require('glob')
 const PixelDiff = require('pixel-diff')
 
 const IMAGE_FORMAT = 'png'
+const SCREENSHOT_EXTENSION = 'png'
+
+const globDir = util.promisify(glob)
+
+function resolveScreenshotPath(dir, snapshotName) {
+  return path.resolve(dir, snapshotName)
+}
+
+async function getScreenshots(dir) {
+  return await globDir(`*.${SCREENSHOT_EXTENSION}`, { cwd: path.resolve(dir) })
+}
 
 async function compareSnapshot(
-  fixturePath,
-  { outputPath, referencePath, testPath }
+  snapshotName,
+  { referenceDir, testDir, outputDir }
 ) {
+  console.log(`Comparing screenshot ${snapshotName}`)
+
   const diff = new PixelDiff({
-    imageAPath: path.resolve(referencePath, fixturePath),
-    imageBPath: path.resolve(testPath, fixturePath),
-    imageOutputPath: path.resolve(outputPath, `${fixturePath}.${IMAGE_FORMAT}`),
+    imageAPath: resolveScreenshotPath(referenceDir, snapshotName),
+    imageBPath: resolveScreenshotPath(testDir, snapshotName),
+    imageOutputPath: resolveScreenshotPath(
+      outputDir,
+      `${snapshotName}.${IMAGE_FORMAT}`
+    ),
     imageOutput: PixelDiff.OUTPUT_SIMILAR,
     thresholdType: PixelDiff.THRESHOLD_PERCENT,
     threshold: 0.01, // 1% threshold
@@ -20,15 +38,13 @@ async function compareSnapshot(
   return diff.runWithPromise()
 }
 
-async function command({ outputPath, referencePath, testPath }) {
-  const fixtures = fs.readdirSync(path.resolve(referencePath))
+async function command({ referenceDir, testDir, outputDir, max }) {
+  const snapshots = await getScreenshots(referenceDir)
 
-  console.log('Starting comparison...')
+  console.log('Starting tests...\n')
 
-  for (let fixturePath of fixtures) {
-    console.log(`Comparing ${fixturePath}`)
-
-    await compareSnapshot(fixturePath, { outputPath, referencePath, testPath })
+  for (let snapshotName of snapshots.slice(0, max)) {
+    await compareSnapshot(snapshotName, { referenceDir, testDir, outputDir })
   }
 }
 

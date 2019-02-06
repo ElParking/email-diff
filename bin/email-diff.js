@@ -5,51 +5,74 @@ const testCommand = require('../commands/test')
 
 yargs
   .command(
-    'capture <site>',
+    'capture',
     'Capture links screenshots',
     (yargs) => {
       yargs
-        .positional('site', {
-          describe: 'site pages to capture',
-        })
         .option('dir', {
+          describe: 'Snapshots directory',
+          type: 'string',
+        })
+        .option('output-dir', {
+          default: 'output',
           describe: 'Screenshots output directory',
+          type: 'string',
         })
         .option('headless', {
           describe: 'Run in headless mode',
-          default: false,
+          default: true,
+          type: 'boolean',
+        })
+        .option('max', {
+          describe: 'Maximum snapshots to process',
+          // TODO: Review this :see_no_evil:
+          default: Infinity,
+          type: 'number',
         })
         .demandOption(['dir'])
     },
     (argv) => {
       captureCommand({
-        host: argv.site,
-        screenshotsPath: argv.dir,
+        dir: argv.dir,
+        outputDir: argv.outputDir,
         headless: argv.headless,
+        max: argv.max,
       })
     }
   )
   .command(
     'test',
-    'Test screenshots',
+    'Compare screenshots',
     (yargs) => {
       yargs
-        .option('dir', {
-          describe: 'Output directory',
-        })
         .option('reference-dir', {
           describe: 'Screenshots reference directory',
+          default: 'reference',
+          type: 'string',
         })
         .option('test-dir', {
           describe: 'Screenshots test directory',
+          default: 'test',
+          type: 'string',
         })
-        .demandOption(['dir', 'reference-dir', 'test-dir'])
+        .option('output-dir', {
+          describe: 'Output directory',
+          default: 'output',
+          type: 'string',
+        })
+        .option('max', {
+          describe: 'Maximum snapshots to compare',
+          // TODO: Review this :see_no_evil:
+          default: Infinity,
+          type: 'number',
+        })
     },
     (argv) => {
       testCommand({
-        outputPath: argv.dir,
-        referencePath: argv.referenceDir,
-        testPath: argv.testDir,
+        referenceDir: argv.referenceDir,
+        testDir: argv.testDir,
+        outputDir: argv.outputDir,
+        max: argv.max,
       })
     }
   )
