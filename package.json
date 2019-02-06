@@ -2,6 +2,7 @@
   "name": "email-diff",
   "description": "Email diff tool",
   "version": "1.0.0",
+  "author": "Eduardo Lanchares <eduardo.lanchares@elparking.com>",
   "main": "index.js",
   "license": "MIT",
   "bin": "bin/email-diff.js",
