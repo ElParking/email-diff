@@ -7,10 +7,23 @@ const PixelDiff = require('pixel-diff')
 const IMAGE_FORMAT = 'png'
 const SCREENSHOT_EXTENSION = 'png'
 
+const makeDir = util.promisify(fs.mkdir)
 const globDir = util.promisify(glob)
 
 function resolveScreenshotPath(dir, snapshotName) {
   return path.resolve(dir, snapshotName)
+}
+
+async function ensureScreenshotsDir(dir) {
+  try {
+    await makeDir(path.resolve(dir))
+  } catch (error) {
+    if (error.code === 'EEXIST') {
+      return
+    }
+
+    throw error
+  }
 }
 
 async function getScreenshots(dir) {
@@ -39,6 +52,8 @@ async function compareSnapshot(
 }
 
 async function command({ referenceDir, testDir, outputDir, max }) {
+  await ensureScreenshotsDir(outputDir)
+
   const snapshots = await getScreenshots(referenceDir)
 
   console.log('Starting tests...\n')
