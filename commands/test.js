@@ -43,7 +43,7 @@ async function compareSnapshot(
       outputDir,
       `${snapshotName}.${IMAGE_FORMAT}`
     ),
-    imageOutput: PixelDiff.OUTPUT_SIMILAR,
+    imageOutputLimit: PixelDiff.OUTPUT_SIMILAR,
     thresholdType: PixelDiff.THRESHOLD_PERCENT,
     threshold: 0.01, // 1% threshold
   })
