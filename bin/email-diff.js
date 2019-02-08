@@ -66,6 +66,11 @@ yargs
           default: Infinity,
           type: 'number',
         })
+        .option('threshold', {
+          describe: 'Image diff threshold',
+          default: 0.01, // 1%
+          type: 'number',
+        })
     },
     (argv) => {
       testCommand({

@@ -32,7 +32,7 @@ async function getScreenshots(dir) {
 
 async function compareSnapshot(
   snapshotName,
-  { referenceDir, testDir, outputDir }
+  { referenceDir, testDir, outputDir, threshold }
 ) {
   console.log(`Comparing screenshot ${snapshotName}`)
 
@@ -45,13 +45,13 @@ async function compareSnapshot(
     ),
     imageOutputLimit: PixelDiff.OUTPUT_SIMILAR,
     thresholdType: PixelDiff.THRESHOLD_PERCENT,
-    threshold: 0.01, // 1% threshold
+    threshold: threshold,
   })
 
   return diff.runWithPromise()
 }
 
-async function command({ referenceDir, testDir, outputDir, max }) {
+async function command({ referenceDir, testDir, outputDir, max, threshold }) {
   await ensureScreenshotsDir(outputDir)
 
   const snapshots = await getScreenshots(referenceDir)
@@ -59,7 +59,12 @@ async function command({ referenceDir, testDir, outputDir, max }) {
   console.log('Starting tests...\n')
 
   for (let snapshotName of snapshots.slice(0, max)) {
-    await compareSnapshot(snapshotName, { referenceDir, testDir, outputDir })
+    await compareSnapshot(snapshotName, {
+      referenceDir,
+      testDir,
+      outputDir,
+      threshold,
+    })
   }
 }
 
