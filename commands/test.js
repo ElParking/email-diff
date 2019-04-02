@@ -54,17 +54,30 @@ async function compareSnapshot(
 async function command({ referenceDir, testDir, outputDir, max, threshold }) {
   await ensureScreenshotsDir(outputDir)
 
-  const snapshots = await getScreenshots(referenceDir)
+  const snapshotsA = new Set(await getScreenshots(referenceDir))
+  const snapshotsB = new Set(await getScreenshots(testDir))
+  const snapshots = new Set(
+    [...snapshotsA].filter((snapshot) => snapshotsB.has(snapshot)).slice(0, max)
+  )
+
+  if (snapshots.size === 0) {
+    console.log(`Nothing to compare ¯\\_(ツ)_/¯`)
+    return
+  }
 
   console.log('Starting tests...\n')
 
-  for (let snapshotName of snapshots.slice(0, max)) {
-    await compareSnapshot(snapshotName, {
-      referenceDir,
-      testDir,
-      outputDir,
-      threshold,
-    })
+  for (let snapshotName of snapshots) {
+    try {
+      await compareSnapshot(snapshotName, {
+        referenceDir,
+        testDir,
+        outputDir,
+        threshold,
+      })
+    } catch (error) {
+      // Errors will be printed by PixelDiff instance
+    }
   }
 }
 
