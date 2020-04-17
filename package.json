@@ -1,7 +1,7 @@
 {
   "name": "email-diff",
   "description": "Email diff tool",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "author": "Eduardo Lanchares <eduardo.lanchares@elparking.com>",
   "main": "index.js",
   "license": "MIT",
@@ -22,5 +22,9 @@
   },
   "devDependencies": {
     "prettier": "^1.16.4"
+  },
+  "resolutions": {
+    "puppeteer/https-proxy-agent": "2.2.4",
+    "puppeteer/extract-zip/mkdirp/minimist": "0.2.1"
   }
 }
